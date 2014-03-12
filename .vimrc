@@ -345,11 +345,8 @@ imap <expr><CR> neosnippet#expandable_or_jumpable() ?
 " Colorscheme for airline
 let g:airline_theme='understated'
 
-" Set custom left separator
-let g:airline_left_sep = '▶'
-
-" Set custom right separator
-let g:airline_right_sep = '◀'
+" Set integrating with powerline fonts
+let g:airline_powerline_fonts = 1
 
 " Enable airline for tab-bar
 let g:airline#extensions#tabline#enabled = 1
@@ -437,10 +434,10 @@ call arpeggio#map('i', '', 0, 'jk', '<ESC>')
 colorscheme solarized
 
 " Setting up light color scheme
-set background=light
+set background=dark
 
 " set highlighting for colorcolumn
-highlight ColorColumn ctermbg=lightGrey
+highlight ColorColumn ctermbg=Black
 
 "--------------------------------------------------
 " General options
@@ -559,7 +556,7 @@ set number
 set cursorline
 
 " maximum text length at 80 symbols, vim automatically breaks longer lines
-set textwidth=80
+set textwidth=120
 
 " higlight column right after max textwidth
 set colorcolumn=+1
