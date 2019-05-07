@@ -1,10 +1,16 @@
 "--------------------------------------------------
 " NeoBundle Init
 
+" Use 256 colors in vim
+" some plugins not work without it
+set t_Co=256
+
 " Turn off filetype plugins before bundles init
 filetype off
 " Auto installing NeoNeoBundle
 let isNpmInstalled = executable("npm")
+" Default path for node-modules
+let s:defaultNodeModules = '~/.vim/node_modules/.bin/'
 let iCanHazNeoBundle=1
 let neobundle_readme=expand($HOME.'/.vim/bundle/neobundle.vim/README.md')
 if !filereadable(neobundle_readme)
@@ -24,7 +30,7 @@ if has('vim_starting')
     set runtimepath+=$HOME/.vim/bundle/neobundle.vim/
 endif
 
-call neobundle#rc(expand($HOME.'/.vim/bundle/'))
+call neobundle#begin(expand($HOME.'/.vim/bundle/'))
 
 " Determine make or gmake will be used for making additional deps for Bundles
 let g:make = 'gmake'
@@ -38,7 +44,7 @@ endif
 " Let NeoNeoBundle manage NeoNeoBundle
 NeoBundle 'Shougo/neobundle.vim'
 
-" Instlall vimrpoc. is uses by unite and neocomplcache
+" Install vimrpoc. is uses by unite and neocomplcache
 " for async searches and calls
 NeoBundle 'Shougo/vimproc', {
 \ 'build' : {
@@ -54,16 +60,18 @@ NeoBundle 'vim-scripts/tlib'
 " Allow word for bookmark marks, and nice quickfix window with bookmark list
 " NeoBundle 'AndrewRadev/simple_bookmarks.vim'
 
-" plugin for fuzzy file search, most recent files list
+" Plugin for fuzzy file search, most recent files list
 " and much more
 NeoBundle 'Shougo/unite.vim'
 
-" Snippets engine with good integration with neocomplcache
-NeoBundle 'Shougo/neosnippet'
-" Default snippets for neosnippet, i prefer vim-snippets
-"NeoBundle 'Shougo/neosnippet-snippets'
+" Snippet engine
+NeoBundle 'SirVer/ultisnips'
+
 " Default snippets
 NeoBundle 'honza/vim-snippets'
+
+" Dirr diff
+NeoBundle 'vim-scripts/DirDiff.vim'
 
 " Colorscheme solarazied for vim
 NeoBundle 'altercation/vim-colors-solarized'
@@ -75,22 +83,21 @@ NeoBundle 'Raimondi/delimitMate'
 " Add code static check on write
 " need to be properly configured.
 " I just enable it, with default config,
-" many false positive but still usefull
-NeoBundle 'scrooloose/syntastic'
-" Install jshint and csslint for syntastic
-" Path to jshint if it not installed globally, then use local installation
-if !executable("jshint")
-    let g:syntastic_jshint_exec = '~/.vim/node_modules/.bin/jshint'
-    "let g:syntastic_javascript_jshint_exec = '~/.vim/node_modules/.bin/jshint'
-    if isNpmInstalled && !executable(expand(g:syntastic_jshint_exec))
+" many false positive but still useful
+" NeoBundle 'scrooloose/syntastic'
+NeoBundle 'w0rp/ale'
+
+" Install jshint and stylelint for syntastic
+" Path to jshint if it not installed, then use local installation
+if isNpmInstalled
+    if !executable(expand(s:defaultNodeModules . 'jshint'))
         silent ! echo 'Installing jshint' && npm --prefix ~/.vim/ install jshint
     endif
-endif
-" Path to csslint if it not installed globally, then use local installation
-if !executable("csslint")
-    let g:syntastic_css_csslint_exec='~/.vim/node_modules/.bin/csslint'
-    if isNpmInstalled && !executable(expand(g:syntastic_css_csslint_exec))
-        silent ! echo 'Installing csslint' && npm --prefix ~/.vim/ install csslint
+    if !executable(expand(s:defaultNodeModules . 'tslint'))
+        silent ! echo 'Installing tslint' && npm --prefix ~/.vim/ install tslint
+    endif
+    if !executable(expand(s:defaultNodeModules . 'stylelint'))
+        silent ! echo 'Installing stylelint' && npm --prefix ~/.vim/ install stylelint
     endif
 endif
 
@@ -99,20 +106,14 @@ endif
 " Must have
 NeoBundle 'scrooloose/nerdtree'
 
-" Provide smart autocomplete results for javascript, and some usefull commands
-if has("python")
-    NeoBundle 'marijnh/tern_for_vim'
-    " install node dependencies for tern
-    if isNpmInstalled && isdirectory(expand('~/.vim/bundle/tern_for_vim')) && !isdirectory(expand('~/.vim/bundle/tern_for_vim/node_modules'))
-        silent ! echo 'Installing tern' && npm --prefix ~/.vim/bundle/tern_for_vim install
-    endif
-endif
-
 " Add smart commands for comments like:
 " gcc - Toggle comment for the current line
 " gc  - Toggle comments for selected region or number of strings
-" Very usefull
+" Very useful
 NeoBundle 'tomtom/tcomment_vim'
+
+" Show code coverage in vim
+NeoBundle 'L0stsoul/coverage.vim'
 
 " Best git wrapper for vim
 " But with my workflow, i really rarely use it
@@ -136,12 +137,37 @@ NeoBundle 'tpope/vim-surround'
 " HTML5 + inline SVG omnicomplete funtion, indent and syntax for Vim.
 NeoBundle 'othree/html5.vim'
 
+" Improve javascript syntax higlighting, needed for good folding,
+" and good-looking javascript code
+NeoBundle 'jelera/vim-javascript-syntax'
+
+" Improved json syntax highlighting
+NeoBundle 'elzr/vim-json'
+
+" Syntax highlighting for .jsx (js files for react js)
+NeoBundle 'maxmellon/vim-jsx-pretty'
+
+" Syntax highlighting for typescript
+NeoBundle 'leafgarland/typescript-vim'
+
+" Add Support css3 property
+NeoBundle 'hail2u/vim-css3-syntax'
+
+" Syntax highlighting for mustache & handlebars
+NeoBundle 'mustache/vim-mustache-handlebars'
+
+" Syntax highlighting for Stylus
+NeoBundle 'wavded/vim-stylus'
+
+" Add support for taltoad/vim-jadeumarkdown
+NeoBundle 'tpope/vim-markdown'
+
 " Highlights the matching HTML tag when the cursor
 " is positioned on a tag.
 NeoBundle 'gregsexton/MatchTag'
 
-" Add Support css3 property
-NeoBundle 'hail2u/vim-css3-syntax'
+" Automatically add closing tags in html-like formats
+NeoBundle 'alvan/vim-closetag'
 
 " Smart indent for javascript
 " http://www.vim.org/scripts/script.php?script_id=3081
@@ -153,17 +179,30 @@ NeoBundle 'lukaszb/vim-web-indent'
 NeoBundle 'jszakmeister/vim-togglecursor'
 
 " Nice statusline/ruler for vim
-NeoBundle 'bling/vim-airline'
+NeoBundle 'vim-airline/vim-airline'
+NeoBundle 'vim-airline/vim-airline-themes'
 
-" Improve javascritp syntax higlighting, needed for good folding,
-" and good-looking javascritp code
-NeoBundle 'jelera/vim-javascript-syntax'
-
-" Code complete
-NeoBundle 'Shougo/neocomplcache.vim'
+" Code-completion for jquery, lodash e.t.c
+NeoBundle 'othree/javascript-libraries-syntax.vim'
 
 " Most recent files source for unite
 NeoBundle 'Shougo/neomru.vim'
+
+" Autocompletion engine
+NeoBundle 'Valloric/YouCompleteMe', {
+     \ 'build' : {
+     \     'unix' : './install.sh --js-completer && git submodule update --init --recursive',
+     \     'windows' : './install.sh --js-completer && git submodule update --init --recursive',
+     \     'cygwin' : './install.sh  --js-completer && git submodule update --init --recursive'
+     \    }
+     \ }
+" uses globally installed typescript for compeltion
+if isNpmInstalled && !executable('tsc')
+    silent ! echo 'Installing typescript' && npm install -g typescript
+endif
+
+" Yank history for unite
+NeoBundle 'Shougo/neoyank.vim'
 
 " Plugin for chord mappings
 NeoBundle 'kana/vim-arpeggio'
@@ -172,12 +211,7 @@ NeoBundle 'kana/vim-arpeggio'
 " But not necessary with syntastics
 " NeoBundle 'walm/jshint.vim'
 
-" Installing bundles for the first time
-if iCanHazNeoBundle == 0
-    echo 'Installing Bundles, please ignore key map error messages'
-    :NeoBundleInstall
-    :so $MYVIMRC
-endif
+call neobundle#end()
 
 " Enable Indent in plugins
 filetype plugin indent on
@@ -186,10 +220,45 @@ syntax on
 
 " If there are uninstalled bundles found on startup,
 " this will conveniently prompt you to install them.
+
+" Disable annoying prompt on initial bundle install
+set nomore
+
+" Fix issue when github refuse connections on initial install
+let g:neobundle#install_max_processes=2
+
+" Fix issue for long builds during initial install
+let g:neobundle#install_process_timeout=180
+
+" Install all bundles on first launch
+if !iCanHazNeoBundle
+    NeoBundleInstall
+endif
+
+" Check new bundles on startup
 NeoBundleCheck
 
 "--------------------------------------------------
 " Bundles settings
+
+"-------------------------
+" ultsnips
+
+let g:UltiSnipsJumpForwardTrigger="<tab>"
+let g:UltiSnipsJumpBackwardTrigger="<S-tab>"
+let g:UltiSnipsExpandTrigger="<nop>"
+let g:ulti_expand_or_jump_res = 0
+
+" Smart snippet expanding on CR
+function! <SID>ExpandSnippetOrReturn()
+  let snippet = UltiSnips#ExpandSnippetOrJump()
+  if g:ulti_expand_or_jump_res > 0
+    return snippet
+  else
+    return "\<CR>"
+  endif
+endfunction
+inoremap <expr> <CR> pumvisible() ? "<C-R>=<SID>ExpandSnippetOrReturn()<CR>" : "\<CR>"
 
 "-------------------------
 " Unite
@@ -210,7 +279,7 @@ let g:unite_source_file_mru_limit = 100
 " Enable history for yanks
 let g:unite_source_history_yank_enable = 1
 
-" Make samll limit for yank history,
+" Make small limit for yank history,
 let g:unite_source_history_yank_limit = 40
 
 " Grep options Default for unite + supress error messages
@@ -231,16 +300,17 @@ endif
 nnoremap <silent><leader>m :<C-u>Unite file_mru <CR>
 
 " Hotkey for open history window
-nnoremap <silent><leader>h :Unite -quick-match -max-multi-lines=2 -start-insert -auto-quit history/yank<CR>
+nnoremap <silent><leader>h :Unite -quick-match -max-multi-lines=2 -start-insert history/yank<CR>
 
 " Quick tab navigation
-nnoremap <silent><leader>' :Unite -quick-match -auto-quit tab<CR>
+nnoremap <silent><leader>' :Unite tab<CR>
 
-" Fuzzy find files
-nnoremap <silent><leader>; :Unite file_rec/async -start-insert<CR>
-
-" Unite-grep
-nnoremap <silent><leader>/ :Unite grep:. -no-start-insert -no-quit -keep-focus -wrap<CR>
+"-------------------------
+" coverage
+"
+let g:coverage_json_report_pathes = ['.coverage/coverage-final.json', 'coverage/coverage-final.json']
+let g:coverage_sign_covered = '⦿'
+let g:coverage_show_covered = 1
 
 "-------------------------
 " NERDTree
@@ -255,21 +325,20 @@ let NERDTreeMinimalUI=1
 nmap <silent> <leader>f :NERDTreeFind<CR>
 
 "-------------------------
-" Syntastic
+" Ale
+"
 
-" Enable autochecks
-let g:syntastic_check_on_open=1
-let g:syntastic_enable_signs=1
+" Always open sign column, it's annoying if its jumping
+let g:ale_sign_column_always = 1
 
-" For correct works of next/previous error navigation
-let g:syntastic_always_populate_loc_list = 1
+let g:ale_sign_error = '😱'
+let g:ale_sign_warning = '😨'
 
-" open quicfix window with all error found
-nmap <silent> <leader>ll :Errors<cr>
-" previous syntastic error
-nmap <silent> [ :lprev<cr>
-" next syntastic error
-nmap <silent> ] :lnext<cr>
+" Integrate Ale in airline
+let g:airline#extensions#ale#enabled = 1
+
+nmap <silent> [ <Plug>(ale_previous_wrap)
+nmap <silent> ] <Plug>(ale_next_wrap)
 
 "-------------------------
 " Fugitive
@@ -304,40 +373,26 @@ let delimitMate_expand_cr = 1
 " if x - cursor if you press space in {x} result will be { x } instead of { x}
 let delimitMate_expand_space = 1
 
+" Enable it for quotes
+let delimitMate_smart_quotes = 1
+
 "-------------------------
-" Tern_for_vim
+" vim-mustache-handlebars
 
-" Go to definition
-nmap <silent> <leader>td :TernDef<CR>
+" Enable shortcuts for things like {{{ an {{
+let g:mustache_abbreviations = 1
 
-" Find all refs for variable under cursor
-nmap <silent> <leader>tr :TernRefs<CR>
+"-------------------------
+" vim-closetag
 
-" Smart variable rename
-nmap <silent> <leader>tn :TernRename<CR>
+" Enable for files with this extensions
+let g:closetag_filenames = "*.handlebars,*.html,*.xhtml,*.phtml,*.tsx,*jsx"
 
 "-------------------------
 " Solarized
 
-" if You have problem with background, uncomment this line
+" If You have problem with background, uncomment this line
 " let g:solarized_termtrans=1
-
-"-------------------------
-" neosnippets
-"
-
-" Enable snipMate compatibility
-let g:neosnippet#enable_snipmate_compatibility = 1
-
-" Tell Neosnippet about the other snippets
-let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
-
-" Disables standart snippets. We use vim-snippets bundle instead
-let g:neosnippet#disable_runtime_snippets = { '_' : 1 }
-
-" Expand snippet and jimp to next snippet field on Enter key.
-imap <expr><CR> neosnippet#expandable_or_jumpable() ?
-\ "\<Plug>(neosnippet_expand_or_jump)" : "\<CR>"
 
 "-------------------------
 " vim-airline
@@ -364,67 +419,46 @@ let g:airline_section_y = ''
 let g:airline_section_x = ''
 
 "-------------------------
-" neocomplcache
+" YouCompleteMe
 
-" Enable NeocomplCache at startup
-let g:neocomplcache_enable_at_startup = 1
+let g:ycm_semantic_triggers = {
+    \   'css': [ 're!^\s{4}', 're!:\s+' ],
+    \   'less': [ 're!^\s{4}', 're!:\s+' ]
+    \ }
 
-" Max items in code-complete
-let g:neocomplcache_max_list = 10
+" Choose completion with tab
+let g:ycm_key_list_select_completion=["<tab>"]
+let g:ycm_key_list_previous_completion=["<S-tab>"]
 
-" Max width of code-complete window
-let g:neocomplcache_max_keyword_width = 80
+let g:ycm_filepath_blacklist = {
+    \ 'jsx': 1,
+    \ 'typescript': 1,
+    \ 'html': 1,
+    \ 'xml': 1
+    \}
 
-" Code complete is ignoring case until no Uppercase letter is in input
-let g:neocomplcache_enable_smart_case = 1
+" Since we use ale already
+let g:ycm_show_diagnostics_ui = 0
 
-" Auto select first item in code-complete
-let g:neocomplcache_enable_auto_select = 1
+" Go to type definition/declaration
+nmap <silent> <leader>td :YcmCompleter GoTo<CR>
 
-" Disable auto popup
-let g:neocomplcache_disable_auto_complete = 1
+" Show all references to variable under coursor
+nmap <silent> <leader>gr :YcmCompleter GoToReferences<CR>
 
-" Smart tab Behavior
-function! CleverTab()
-    " If autocomplete window visible then select next item in there
-    if pumvisible()
-        return "\<C-n>"
-    endif
-    " If it's begining of the string then return just tab pressed
-    let substr = strpart(getline('.'), 0, col('.') - 1)
-    let substr = matchstr(substr, '[^ \t]*$')
-    if strlen(substr) == 0
-        " nothing to match on empty string
-        return "\<Tab>"
-    else
-        " If not begining of the string, and autocomplete popup is not visible
-        " Open this popup
-        return "\<C-x>\<C-u>"
-    endif
-endfunction
-inoremap <expr><TAB> CleverTab()
+" Show type of variable under cursor
+nmap <silent> <leader>gt :YcmCompleter GetType<CR>
 
-" Undo autocomplete
-inoremap <expr><C-e> neocomplcache#undo_completion()
+" Show docs for entity under cursor
+nmap <silent> <leader>gd :YcmCompleter GetDoc<CR>
 
-" Enable omni completion.
-autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-
-" For cursor moving in insert mode
-inoremap <expr><Left>  neocomplcache#close_popup() . "\<Left>"
-inoremap <expr><Right> neocomplcache#close_popup() . "\<Right>"
-inoremap <expr><Up>    neocomplcache#close_popup() . "\<Up>"
-inoremap <expr><Down>  neocomplcache#close_popup() . "\<Down>"
-
-" disable preview in code complete
-set completeopt-=preview
+" Refactor smart rename, space at the end are important :)
+nmap <leader>rr :YcmCompleter RefactorRename
 
 "-------------------------
 " Arpeggio
 
-" map jk to escape
+" Map jk to escape
 call arpeggio#map('i', '', 0, 'jk', '<ESC>')
 
 "--------------------------------------------------
@@ -454,7 +488,7 @@ highlight ColorColumn ctermbg=Black
 " Auto reload changed files
 set autoread
 
-" Always change current dirrectory to current-editing-file dir
+" Always change current directory to current-editing-file dir
 "set autochdir
 
 " Indicates fast terminal connection
@@ -472,11 +506,7 @@ if &modifiable
     set fileformat=unix
 endif
 
-" Use 256 colors in vim
-" vim-airline not work without it
-set t_Co=256
-
-" Enable Tcl interface. Not shure what is exactly mean.
+" Enable Tcl interface. Not sure what is exactly mean.
 " set infercase
 
 " Interprete all files like binary and disable many features.
@@ -491,6 +521,12 @@ set noshowmode
 
 " Show file name in window title
 set title
+
+" open preview window at bottom
+set splitbelow
+
+" Hide preview window for completion
+set completeopt-=preview
 
 " Mute error bell
 set novisualbell
@@ -509,7 +545,7 @@ set listchars=tab:⇥\ ,trail:·,extends:⋯,precedes:⋯,nbsp:~
 " Useless with nowrap
 " set linebreak
 
-" Numbers of line to scroll when the cursor get off the screen
+" Numbers of lines to scroll when the cursor get off the screen
 " Useless with scrolloff
 " set scrolljump=5
 
@@ -524,7 +560,7 @@ set scrolloff=10
 set sidescrolloff=10
 
 " Vim will move to the previous/next line after reaching first/last char in
-" the line with this commnad (you can add 'h' or 'l' here as well)
+" the line with this command (you can add 'h' or 'l' here as well)
 " <,> stand for arrows in command mode and [,] arrows in visual mode
 set whichwrap=b,s,<,>,[,],
 
@@ -555,10 +591,10 @@ set number
 " Highlight line with cursor
 set cursorline
 
-" maximum text length at 80 symbols, vim automatically breaks longer lines
+" Maximum text length at 80 symbols, vim automatically breaks longer lines
 set textwidth=120
 
-" higlight column right after max textwidth
+" Highlight column right after max textwidth
 set colorcolumn=+1
 
 
@@ -568,24 +604,24 @@ set colorcolumn=+1
 " Copy indent from previous line
 set autoindent
 
-" Enable smart indent. it add additional indents whe necessary
+" Enable smart indent. It add additional indents whe necessary
 set smartindent
 
 " Replace tabs with spaces
 set expandtab
 
-" Whe you hit tab at start of line, indent added according to shiftwidth value
+" When you hit tab at start of line, indent added according to shiftwidth value
 set smarttab
 
-" number of spaces to use for each step of indent
-set shiftwidth=4
+" Number of spaces to use for each step of indent
+set shiftwidth=2
 
 " Number of spaces that a Tab in the file counts for
-set tabstop=4
+set tabstop=2
 
-" Same but for editing operation (not shure what exactly does it means)
+" Same but for editing operation (not sure what exactly does it means)
 " but in most cases tabstop and softtabstop better be the same
-set softtabstop=4
+set softtabstop=2
 
 " Round indent to multiple of 'shiftwidth'.
 " Indentation always be multiple of shiftwidth
@@ -604,26 +640,22 @@ set hlsearch
 " Ignore case in search patterns
 set ignorecase
 
-" Override the 'ignorecase' option if the search patter ncontains upper case characters
+" Override the 'ignorecase' option if the search pattern contains upper case characters
 set smartcase
 
 " Live search. While typing a search command, show where the pattern
 set incsearch
 
-" Disable higlighting search result on Enter key
+" Disable highlighting search result on Enter key
 nnoremap <silent> <cr> :nohlsearch<cr><cr>
 
 " Show matching brackets
 set showmatch
 
-" Make < and > match as well
-set matchpairs+=<:>
-
-
 "--------------------------------------------------
 " Wildmenu
 
-" Extended autocmpletion for commands
+" Extended autocompletion for commands
 set wildmenu
 
 " Autocmpletion hotkey
@@ -657,8 +689,8 @@ set iskeyword+=-
 " Disable backups file
 set nobackup
 
-" Disable vim common sequense for saving.
-" By defalut vim write buffer to a new file, then delete original file
+" Disable vim common sequence for saving.
+" By default vim write buffer to a new file, then delete original file
 " then rename the new file.
 set nowritebackup
 
@@ -667,6 +699,9 @@ set noswapfile
 
 " Do not add eol at the end of file.
 set noeol
+
+" Spellcheck
+set spell spelllang=en_us
 
 "--------------------------------------------------
 " Diff Options
@@ -694,7 +729,7 @@ vmap <leader>s :s//<left>
 nmap <leader>w <C-w>w
 
 "--------------------------------------------------
-" Aautocmd
+" Autocmd
 
 " It executes specific command when specific events occured
 " like reading or writing file, or open or close buffer
@@ -702,9 +737,9 @@ if has("autocmd")
     " Define group of commands,
     " Commands defined in .vimrc don't bind twice if .vimrc will reload
     augroup vimrc
-    " Delete any previosly defined autocommands
+    " Delete any previously defined autocommands
     au!
-        " Auto reload vim after your cahange it
+        " Auto reload vim after your change it
         au BufWritePost *.vim source $MYVIMRC | AirlineRefresh
         au BufWritePost .vimrc source $MYVIMRC | AirlineRefresh
 
@@ -718,10 +753,10 @@ if has("autocmd")
         au FileType less set ft=less.css
         au BufWinEnter * if line2byte(line("$") + 1) > 100000 | syntax clear | endif
         au BufRead,BufNewFile *.js set ft=javascript.javascript-jquery
-        au BufRead,BufNewFile *.json set ft=javascript
+        au BufRead,BufNewFile *.json set ft=json
         " Execute python \ -mjson.tool for autoformatting *.json
-        au BufRead,BufNewFile *.json set equalprg=python\ -mjson.tool
         au BufRead,BufNewFile *.bemhtml set ft=javascript
+        au BufRead,BufNewFile *.bemtree set ft=javascript
         au BufRead,BufNewFile *.xjst set ft=javascript
         au BufRead,BufNewFile *.tt2 set ft=tt2
         au BufRead,BufNewFile *.plaintex set ft=plaintex.tex
@@ -731,12 +766,18 @@ if has("autocmd")
         autocmd CursorMovedI * if pumvisible() == 0|pclose|endif
         autocmd InsertLeave * if pumvisible() == 0|pclose|endif
 
+        " Enable omni completion.
+        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+        autocmd FileType typescript setlocal omnifunc=typescriptcomlete#CompleteTS
+
         " Disable vertical line at max string length in NERDTree
         autocmd FileType * setlocal colorcolumn=+1
         autocmd FileType nerdtree setlocal colorcolumn=""
 
-        " Enable Folding, uses plugin vim-javascript-syntax
-        au FileType javascript* call JavaScriptFold()
+        " Not enable Folding - it really slow on large files, uses plugin vim-javascript-syntax
+        " au FileType javascript* call JavaScriptFold()
 
     " Group end
     augroup END
